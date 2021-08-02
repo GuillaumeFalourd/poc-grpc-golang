@@ -6,11 +6,11 @@ POC of a gRPC project in Golang 🐿
 
 ## Explanation comparing to a REST API
 
-`helloworld/helloworld.proto` file is like a **Controller** class. It's where you will configure the _endpoint_ (in gRPC, those are method names) and the DTO for request and response.
+- `helloworld/helloworld.proto` file is like a **Controller** class. It's where you will configure the _endpoint_ (in gRPC, those are method names) and the DTO for request and response.
 
-`greeter_server/main.go` file is like a **Service** class. It's where you will implement all the method business rules.
+- `greeter_server/main.go` file is like a **Service** class. It's where you will implement all the method business rules.
 
-`greeter_client/main.go` file is an example of a programatic way to consume a gRPC method from the `helloworld.proto` and `greeter_server/main.go` files.
+- `greeter_client/main.go` file is an example of a programatic way to consume a gRPC method from the `helloworld.proto` and `greeter_server/main.go` files.
 
 ## Run
 
