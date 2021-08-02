@@ -44,3 +44,4 @@ go run greeter_client/main.go
 
 Importing the `helloworld/helloworld.proto` file.
 
+<img width="1324" alt="Screen Shot 2021-08-02 at 16 08 43" src="https://user-images.githubusercontent.com/22433243/127911346-42ec13c0-6947-4888-926b-1bb9b9bb58c4.png">
