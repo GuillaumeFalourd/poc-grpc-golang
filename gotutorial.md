@@ -19,17 +19,18 @@ With gRPC we can define our service once in a `.proto` file and implement client
 ## Example code and setup
 
 The example code for our tutorial is in [grpc/grpc-go/examples/route_guide](https://github.com/grpc/grpc-go/tree/master/examples/route_guide). To download the example, clone the `grpc-go` repository by running the following command:
+
 ```shell
-$ go get google.golang.org/grpc
+go get google.golang.org/grpc
 ```
 
 Then change your current directory to `grpc-go/examples/route_guide`:
+
 ```shell
-$ cd $GOPATH/src/google.golang.org/grpc/examples/route_guide
+cd $GOPATH/src/google.golang.org/grpc/examples/route_guide
 ```
 
 You also should have the relevant tools installed to generate the server and client interface code - if you don't already, follow the setup instructions in [the Go quick start guide](https://github.com/grpc/grpc-go/tree/master/examples/).
-
 
 ## Defining the service
 
@@ -46,12 +47,14 @@ service RouteGuide {
 Then you define `rpc` methods inside your service definition, specifying their request and response types. gRPC lets you define four kinds of service method, all of which are used in the `RouteGuide` service:
 
 - A *simple RPC* where the client sends a request to the server using the stub and waits for a response to come back, just like a normal function call.
+
 ```proto
    // Obtains the feature at a given position.
    rpc GetFeature(Point) returns (Feature) {}
 ```
 
 - A *server-side streaming RPC* where the client sends a request to the server and gets a stream to read a sequence of messages back. The client reads from the returned stream until there are no more messages. As you can see in our example, you specify a server-side streaming method by placing the `stream` keyword before the *response* type.
+
 ```proto
   // Obtains the Features available within the given Rectangle.  Results are
   // streamed rather than returned at once (e.g. in a response message with a
@@ -61,6 +64,7 @@ Then you define `rpc` methods inside your service definition, specifying their r
 ```
 
 - A *client-side streaming RPC* where the client writes a sequence of messages and sends them to the server, again using a provided stream. Once the client has finished writing the messages, it waits for the server to read them all and return its response. You specify a client-side streaming method by placing the `stream` keyword before the *request* type.
+
 ```proto
   // Accepts a stream of Points on a route being traversed, returning a
   // RouteSummary when traversal is completed.
@@ -68,6 +72,7 @@ Then you define `rpc` methods inside your service definition, specifying their r
 ```
 
 - A *bidirectional streaming RPC* where both sides send a sequence of messages using a read-write stream. The two streams operate independently, so clients and servers can read and write in whatever order they like: for example, the server could wait to receive all the client messages before writing its responses, or it could alternately read a message then write a message, or some other combination of reads and writes. The order of messages in each stream is preserved. You specify this type of method by placing the `stream` keyword before both the request and the response.
+
 ```proto
   // Accepts a stream of RouteNotes sent while a route is being traversed,
   // while receiving other RouteNotes (e.g. from other users).
@@ -75,6 +80,7 @@ Then you define `rpc` methods inside your service definition, specifying their r
 ```
 
 Our `.proto` file also contains protocol buffer message type definitions for all the request and response types used in our service methods - for example, here's the `Point` message type:
+
 ```proto
 // Points are represented as latitude-longitude pairs in the E7 representation
 // (degrees multiplied by 10**7 and rounded to the nearest integer).
@@ -94,30 +100,34 @@ Next we need to generate the gRPC client and server interfaces from our `.proto`
 For simplicity, we've provided a [bash script](https://github.com/grpc/grpc-go/blob/master/codegen.sh) that runs `protoc` for you with the appropriate plugin, input, and output (if you want to run this by yourself, make sure you've installed protoc and followed the gRPC-Go [installation instructions](https://github.com/grpc/grpc-go/blob/master/README.md) first):
 
 ```shell
-$ codegen.sh route_guide.proto
+codegen.sh route_guide.proto
 ```
 
 which actually runs:
 
 ```shell
-$ protoc --go_out=plugins=grpc:. route_guide.proto
+protoc --go_out=plugins=grpc:. route_guide.proto
 ```
 
 Running this command generates the following file in your current directory:
+
 - `route_guide.pb.go`
 
 This contains:
+
 - All the protocol buffer code to populate, serialize, and retrieve our request and response message types
 - An interface type (or *stub*) for clients to call with the methods defined in the `RouteGuide` service.
 - An interface type for servers to implement, also with the methods defined in the `RouteGuide` service.
 
 
 <a name="server"></a>
+
 ## Creating the server
 
 First let's look at how we create a `RouteGuide` server. If you're only interested in creating gRPC clients, you can skip this section and go straight to [Creating the client](#client) (though you might find it interesting anyway!).
 
 There are two parts to making our `RouteGuide` service do its job:
+
 - Implementing the service interface generated from our service definition: doing the actual "work" of our service.
 - Running a gRPC server to listen for requests from clients and dispatch them to the right service implementation.
 
@@ -172,6 +182,7 @@ func (s *routeGuideServer) GetFeature(ctx context.Context, point *pb.Point) (*pb
 The method is passed a context object for the RPC and the client's `Point` protocol buffer request. It returns a `Feature` protocol buffer object with the response information and an `error`. In the method we populate the `Feature` with the appropriate information, and then `return` it along with an `nil` error to tell gRPC that we've finished dealing with the RPC and that the `Feature` can be returned to the client.
 
 #### Server-side streaming RPC
+
 Now let's look at one of our streaming RPCs. `ListFeatures` is a server-side streaming RPC, so we need to send back multiple `Feature`s to our client.
 
 ```go
@@ -192,6 +203,7 @@ As you can see, instead of getting simple request and response objects in our me
 In the method, we populate as many `Feature` objects as we need to return, writing them to the `RouteGuide_ListFeaturesServer` using its `Send()` method. Finally, as in our simple RPC, we return a `nil` error to tell gRPC that we've finished writing responses. Should any error happen in this call, we return a non-`nil` error; the gRPC layer will translate it into an appropriate RPC status to be sent on the wire.
 
 #### Client-side streaming RPC
+
 Now let's look at something a little more complicated: the client-side streaming method `RecordRoute`, where we get a stream of `Point`s from the client and return a single `RouteSummary` with information about their trip. As you can see, this time the method doesn't have a request parameter at all. Instead, it gets a `RouteGuide_RecordRouteServer` stream, which the server can use to both read *and* write messages - it can receive client messages using its `Recv()` method and return its single response using its `SendAndClose()` method.
 
 ```go
@@ -230,6 +242,7 @@ func (s *routeGuideServer) RecordRoute(stream pb.RouteGuide_RecordRouteServer) e
 In the method body we use the `RouteGuide_RecordRouteServer`s `Recv()` method to repeatedly read in our client's requests to a request object (in this case a `Point`) until there are no more messages: the server needs to check the error returned from `Recv()` after each call. If this is `nil`, the stream is still good and it can continue reading; if it's `io.EOF` the message stream has ended and the server can return its `RouteSummary`. If it has any other value, we return the error "as is" so that it'll be translated to an RPC status by the gRPC layer.
 
 #### Bidirectional streaming RPC
+
 Finally, let's look at our bidirectional streaming RPC `RouteChat()`.
 
 ```go
@@ -272,6 +285,7 @@ pb.RegisterRouteGuideServer(grpcServer, &routeGuideServer{})
 ... // determine whether to use TLS
 grpcServer.Serve(lis)
 ```
+
 To build and start a server, we:
 
 1. Specify the port we want to use to listen for client requests using `lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))`.
@@ -280,6 +294,7 @@ To build and start a server, we:
 4. Call `Serve()` on the server with our port details to do a blocking wait until the process is killed or `Stop()` is called.
 
 <a name="client"></a>
+
 ## Creating the client
 
 In this section, we'll look at creating a Go client for our `RouteGuide` service. You can see our complete example client code in [grpc-go/examples/route_guide/client/client.go](https://github.com/grpc/grpc-go/tree/master/examples/route_guide/client/client.go).
@@ -308,7 +323,7 @@ client := pb.NewRouteGuideClient(conn)
 
 Now let's look at how we call our service methods. Note that in gRPC-Go, RPCs operate in a blocking/synchronous mode, which means that the RPC call waits for the server to respond, and will either return a response or an error.
 
-#### Simple RPC
+#### Simple RPC (2)
 
 Calling the simple RPC `GetFeature` is nearly as straightforward as calling a local method.
 
@@ -325,7 +340,7 @@ As you can see, we call the method on the stub we got earlier. In our method par
 log.Println(feature)
 ```
 
-#### Server-side streaming RPC
+#### Server-side streaming RPC (2)
 
 Here's where we call the server-side streaming method `ListFeatures`, which returns a stream of geographical `Feature`s. If you've already read [Creating the server](#server) some of this may look very familiar - streaming RPCs are implemented in a similar way on both sides.
 
@@ -351,7 +366,7 @@ As in the simple RPC, we pass the method a context and a request. However, inste
 
 We use the `RouteGuide_ListFeaturesClient`'s `Recv()` method to repeatedly read in the server's responses to a response protocol buffer object (in this case a `Feature`) until there are no more messages: the client needs to check the error `err` returned from `Recv()` after each call. If `nil`, the stream is still good and it can continue reading; if it's `io.EOF` then the message stream has ended; otherwise there must be an RPC error, which is passed over through `err`.
 
-#### Client-side streaming RPC
+#### Client-side streaming RPC (2)
 
 The client-side streaming method `RecordRoute` is similar to the server-side method, except that we only pass the method a context and get a `RouteGuide_RecordRouteClient` stream back, which we can use to both write *and* read messages.
 
@@ -382,7 +397,7 @@ log.Printf("Route summary: %v", reply)
 
 The `RouteGuide_RecordRouteClient` has a `Send()` method that we can use to send requests to the server. Once we've finished writing our client's requests to the stream using `Send()`, we need to call `CloseAndRecv()` on the stream to let gRPC know that we've finished writing and are expecting to receive a response. We get our RPC status from the `err` returned from `CloseAndRecv()`. If the status is `nil`, then the first return value from `CloseAndRecv()` will be a valid server response.
 
-#### Bidirectional streaming RPC
+#### Bidirectional streaming RPC (2)
 
 Finally, let's look at our bidirectional streaming RPC `RouteChat()`. As in the case of `RecordRoute`, we only pass the method a context object and get back a stream that we can use to both write and read messages. However, this time we return values via our method's stream while the server is still writing messages to *their* message stream.
 
@@ -414,18 +429,18 @@ stream.CloseSend()
 
 The syntax for reading and writing here is very similar to our client-side streaming method, except we use the stream's `CloseSend()` method once we've finished our call. Although each side will always get the other's messages in the order they were written, both the client and server can read and write in any order — the streams operate completely independently.
 
-## Try it out!
+## Try it out
 
 To compile and run the server, assuming you are in the folder
 `$GOPATH/src/google.golang.org/grpc/examples/route_guide`, simply:
 
 ```sh
-$ go run server/server.go
+go run server/server.go
 ```
 
 Likewise, to run the client:
 
 ```sh
-$ go run client/client.go
+go run client/client.go
 ```
 
