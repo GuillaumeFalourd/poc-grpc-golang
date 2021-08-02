@@ -16,8 +16,6 @@ POC of a gRPC project in Golang 🐿
 
 ### Hello World
 
-#### Hello World Execution
-
 From the `root` directory:
 
 Run the server:
@@ -40,10 +38,8 @@ Importing the `helloworld/helloworld.proto` file.
 
 <img width="1324" alt="bloomRPC" src="https://user-images.githubusercontent.com/22433243/127911346-42ec13c0-6947-4888-926b-1bb9b9bb58c4.png">
 
-
 ### Locally
 
 ![Server](https://user-images.githubusercontent.com/22433243/127906948-3aeb3316-6a7a-4f9f-ad0b-b790c5f54ad5.png)
 
 ![Client](https://user-images.githubusercontent.com/22433243/127906965-71872380-4d42-495a-90b0-1c0ca431e1a7.png)
-
