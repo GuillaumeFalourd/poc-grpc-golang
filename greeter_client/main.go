@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	address     = "localhost:50051"
+	address     = "localhost:3009"
 	defaultName = "world"
 )
 
